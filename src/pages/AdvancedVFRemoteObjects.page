@@ -1,0 +1,135 @@
+<apex:page showHeader="true" sidebar="true">
+
+	<style>
+		.label {
+			float:left;
+			font-weight: bold;
+		}
+
+		.field {
+			overflow: hidden;
+			padding-left: 5px;
+		}
+
+		#contactList {
+			border-collapse: collapse;
+		}
+
+		#contactList, #contactList th, #contactList td {
+			border: 1px solid black;
+		}
+	</style>
+
+	<apex:remoteObjects >
+		<apex:remoteObjectModel name="Account"
+		fields="Id,Name,Description,AccountNumber,AnnualRevenue,NumberOfEmployees,Rating,Website,Type,NumberofLocations__c">
+		</apex:remoteObjectModel>
+		<apex:remoteObjectModel name="Contact" fields="Name, Id, Email, Phone, AccountID">
+		</apex:remoteObjectModel>
+	</apex:remoteObjects>
+
+	<apex:sectionHeader title="Account Information" subtitle="Contact" />
+	<apex:pageBlock title="Contact Directory">
+		<button onclick="retrieveInformation(document.getElementById('accName').value)">Retrieve Contacts</button>
+		<apex:pageBlockSection title="Select Account">
+			<input type="text" id="accName" />
+		</apex:pageBlockSection>
+		<apex:pageBlockSection title="Account Information">
+			<apex:pageBlockSectionItem >
+				<div class="label">Description</div>
+				<div id="desc" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Account Number</div>
+				<div id="accNum" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Annual Revenue</div>
+				<div id="rev" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+			<div class="label">Number of Employees</div>
+				<div id="numEmp" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Rating</div>
+				<div id="rating" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Website</div>
+				<div id="website" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Type</div>
+				<div id="type" class="field" />
+			</apex:pageBlockSectionItem>
+			<apex:pageBlockSectionItem >
+				<div class="label">Number of Locations</div>
+				<div id="numLoc" class="field" />
+			</apex:pageBlockSectionItem>
+
+		</apex:pageBlockSection>
+
+		<apex:pageBlockSection title="Contact Directory" columns="1">
+			<table id="contactList">
+				<tr>
+					<th>Name</th>
+					<th>Email</th>
+					<th>Phone</th>
+				</tr>
+			</table>
+		</apex:pageBlockSection>
+	</apex:pageBlock>
+
+
+	<script>
+		var start;
+
+		function retrieveInformation(name) {
+			start = new Date().getTime() / 1000;
+			var acc = new SObjectModel.Account();
+			acc.retrieve({ where: { Name: { eq: name } },limit:1 },function(err, records, event){
+				if(err) {
+					alert(err.message);
+				}
+				else {
+					var account = records[0];
+					document.getElementById("desc").innerHTML = account.get("Description");
+					document.getElementById("accNum").innerHTML = account.get("AccountNumber");
+					document.getElementById("rev").innerHTML = account.get("AnnualRevenue");
+					document.getElementById("numEmp").innerHTML = account.get("NumberOfEmployees");
+					document.getElementById("rating").innerHTML = account.get("Rating");
+					document.getElementById("website").innerHTML = account.get("Website");
+					document.getElementById("type").innerHTML = account.get("Type");
+					document.getElementById("numLoc").innerHTML = account.get("NumberofLocations__c");
+
+					loadContacts(account.get("Id"));
+				}
+			});
+		}
+
+		function loadContacts(accId){
+			var contacts = new SObjectModel.Contact();
+			contacts.retrieve({ where: { AccountID: { eq: accId } } }, function(err, records, event){
+				if(err) {
+					alert(err.message);
+				}
+				else {
+					var contactList = document.getElementById("contactList");
+					records.forEach(function(record) {
+						var row = contactList.insertRow();
+						var nameCell = row.insertCell(0);
+						nameCell.innerHTML = record.get("Name");
+						var emailCell = row.insertCell(1);
+						emailCell.innerHTML = record.get("Email");
+						var phoneCell = row.insertCell(2);
+						phoneCell.innerHTML = record.get("Phone");
+					});
+
+					var end = new Date().getTime() / 1000;
+					console.log("Took " + (end - start) + " seconds");
+				}
+			});
+		}
+	</script>
+</apex:page>
